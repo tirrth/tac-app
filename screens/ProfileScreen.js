@@ -179,7 +179,7 @@ export default class ProfileScreen extends Component {
                 <Card
                   style={{height: 80, width: 80, borderRadius: 10}}
                   onPress={() =>
-                    this.props.navigation.navigate('AddEditPlatfrom')
+                    this.props.navigation.navigate('AddEditPlatform')
                   }>
                   <View
                     style={{
@@ -200,7 +200,7 @@ export default class ProfileScreen extends Component {
                         color="#8d8d8d"
                         icon={'plus'}
                         onPress={() =>
-                          this.props.navigation.navigate('AddEditPlatfrom')
+                          this.props.navigation.navigate('AddEditPlatform')
                         }
                       />
                     </View>

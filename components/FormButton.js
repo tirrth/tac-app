@@ -1,6 +1,6 @@
 import React from 'react';
 import {Text, TouchableOpacity, StyleSheet, ActivityIndicator} from 'react-native';
-import {windowHeight, windowWidth} from '../utils/Dimentions';
+import {windowHeight, windowWidth} from '../utils/Dimensions';
 
 const FormButton = ({buttonTitle, isClickable, loading, ...rest}) => {
   return (

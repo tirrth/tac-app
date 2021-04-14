@@ -7,7 +7,7 @@ import {Icon} from 'native-base';
 import ShopScreen from '../screens/ShopScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
-import AddEditPlatfrom from '../screens/AddEditPlatfrom';
+import AddEditPlatform from '../screens/AddEditPlatform';
 import WebViewScreen from '../screens/WebViewScreen';
 import QRCodeScreen from '../screens/QRCodeScreen';
 
@@ -28,8 +28,8 @@ const HomeStackScreen = () => {
         options={{headerTitle: 'Edit Profile'}}
       />
       <HomeStack.Screen
-        name="AddEditPlatfrom"
-        component={AddEditPlatfrom}
+        name="AddEditPlatform"
+        component={AddEditPlatform}
         options={{headerTitle: 'Add / Edit Platform'}}
       />
       <HomeStack.Screen

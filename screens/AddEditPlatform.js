@@ -41,6 +41,7 @@ import {Pressable} from 'react-native';
 import {Linking} from 'react-native';
 import {PermissionsAndroid} from 'react-native';
 import {Platform} from 'react-native';
+import {connect} from 'react-redux';
 
 const media = [
   {
@@ -66,11 +67,11 @@ const media = [
     logo_url: require('../assets/social_media_logo_5.png'),
   },
   {
-    add_or_edit: true,
+    add_platform: true,
   },
 ];
 
-export default class AddEditPlatfrom extends Component {
+export default class AddEditPlatform extends Component {
   constructor(props) {
     super(props);
 
@@ -78,6 +79,7 @@ export default class AddEditPlatfrom extends Component {
       platform_info: [],
 
       add_new_modal_toggle: false,
+      edit_vcf_info_modal_toggle: false,
       is_edit_user_added_platform: false,
       edit_user_added_platform_details_for_modal: {},
 
@@ -89,6 +91,7 @@ export default class AddEditPlatfrom extends Component {
 
   async componentDidMount() {
     await this._getAllPlaforms();
+    await this._getCustomisedPlatforms();
   }
 
   _getAllPlaforms = async () => {
@@ -100,17 +103,17 @@ export default class AddEditPlatfrom extends Component {
         },
       })
       .then(async (res) => {
-        console.log('API_GET_ALL_PLATFORMS_KEY', res);
-        // this.setState({ platform_info: res.data.platforms });
         res.data.platforms.map((item) => (item.is_user_added_platform = false));
-        await this._getCustomisedPlatforms(res.data.platforms);
+        this.setState({
+          platform_info: [...this.state.platform_info, ...res.data.platforms],
+        });
       })
       .catch((err) => {
         console.log({...err});
       });
   };
 
-  _getCustomisedPlatforms = async (previous_data) => {
+  _getCustomisedPlatforms = async () => {
     const token = await AsyncStorage.getItem('token');
     axios
       .get(UNIVERSAL_ENTRY_POINT_ADDRESS + API_GET_CUSTOMISED_PLATFORMS_KEY, {
@@ -122,14 +125,13 @@ export default class AddEditPlatfrom extends Component {
         res.data.user_added_platforms.map(
           (item) => (item.is_user_added_platform = true),
         );
-        this.setState({
-          platform_info: [
-            ...previous_data,
-            ...res.data.user_added_platforms,
-            {add_or_edit: true},
-          ],
-        });
-        console.log(this.state.platform_info);
+        const platform_info = [
+          ...this.state.platform_info,
+          ...res.data.user_added_platforms,
+        ];
+        platform_info.unshift({edit_vcf_info: true});
+        platform_info.push({add_platform: true});
+        this.setState({platform_info});
       })
       .catch((err) => {
         console.log({...err});
@@ -163,7 +165,7 @@ export default class AddEditPlatfrom extends Component {
       25,
       50,
     );
-    this.props.navigation.reset({routes: [{name: 'AddEditPlatfrom'}]});
+    this.props.navigation.reset({routes: [{name: 'AddEditPlatform'}]});
   };
 
   _onUserAddedPlatformPress = (platform_detail) => {
@@ -218,59 +220,94 @@ export default class AddEditPlatfrom extends Component {
       });
   };
 
-  _renderItem = ({item, index}) => {
-    return item.add_or_edit || item.empty ? (
-      <View key={index} style={{alignItems: 'center', marginTop: 10}}>
-        {!item.empty ? (
-          <>
-            <Card
-              style={{height: 80, width: 80, borderRadius: 10}}
-              onPress={() =>
-                this.setState({
-                  is_edit_user_added_platform: false,
-                  add_new_modal_toggle: true,
-                })
-              }>
+  _renderItem = ({item}) => {
+    if (item.add_platform) {
+      return (
+        <View style={{alignItems: 'center', marginTop: 10}}>
+          <Card
+            style={{height: 80, width: 80, borderRadius: 10}}
+            onPress={() =>
+              this.setState({
+                is_edit_user_added_platform: false,
+                add_new_modal_toggle: true,
+              })
+            }>
+            <View
+              style={{
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
               <View
                 style={{
-                  flex: 1,
+                  height: 70,
+                  width: 70,
+                  backgroundColor: '#eeeeee',
+                  borderRadius: 10,
                   justifyContent: 'center',
                   alignItems: 'center',
                 }}>
-                <View
-                  style={{
-                    height: 70,
-                    width: 70,
-                    backgroundColor: '#eeeeee',
-                    borderRadius: 10,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  }}>
-                  <IconButton
-                    color="#8d8d8d"
-                    icon={'plus'}
-                    onPress={() =>
-                      this.setState({
-                        is_edit_user_added_platform: false,
-                        add_new_modal_toggle: true,
-                      })
-                    }
-                  />
-                </View>
+                <IconButton
+                  color="#8d8d8d"
+                  icon={'plus'}
+                  onPress={() =>
+                    this.setState({
+                      is_edit_user_added_platform: false,
+                      add_new_modal_toggle: true,
+                    })
+                  }
+                />
               </View>
-            </Card>
-            <Text style={{marginTop: 5, color: '#8d8d8d', fontSize: 13}}>
-              Add New
-            </Text>
-          </>
-        ) : (
+            </View>
+          </Card>
+          <Text style={{marginTop: 5, color: '#8d8d8d', fontSize: 13}}>
+            Add New
+          </Text>
+        </View>
+      );
+    } else if (item.edit_vcf_info) {
+      return (
+        <View style={{alignItems: 'center', marginTop: 10}}>
+          <Card
+            style={{height: 80, width: 80, borderRadius: 10}}
+            onPress={() => this.setState({edit_vcf_info_modal_toggle: true})}>
+            <View
+              style={{
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
+              <ImageBackground
+                borderRadius={10}
+                style={{width: 70, height: 70}}
+                source={{
+                  uri:
+                    'https://icons.iconarchive.com/icons/dtafalonso/android-lollipop/256/Contacts-icon.png',
+                }}
+              />
+            </View>
+          </Card>
+          <Text
+            style={{
+              marginTop: 5,
+              color: '#8d8d8d',
+              fontSize: 13,
+            }}>
+            vCard
+          </Text>
+        </View>
+      );
+    } else if (item.empty) {
+      return (
+        <View style={{alignItems: 'center', marginTop: 10}}>
           <View
             style={{height: 80, width: 80, backgroundColor: 'transparent'}}
           />
-        )}
-      </View>
-    ) : (
-      <View key={index} style={{alignItems: 'center', marginTop: 10}}>
+        </View>
+      );
+    }
+    return (
+      <View style={{alignItems: 'center', marginTop: 10}}>
         <Card
           style={{
             backgroundColor: '#fff',
@@ -380,12 +417,12 @@ export default class AddEditPlatfrom extends Component {
               numColumns={3}
               data={this._formatData(this.state.platform_info, 3)}
               renderItem={this._renderItem}
-              keyExtractor={(item) => item.uuid}
+              keyExtractor={(item, index) => `${index}`}
               columnWrapperStyle={{justifyContent: 'space-evenly'}}
             />
           </View>
           {this.state.add_new_modal_toggle ? (
-            <AddEditPlatfromModal
+            <AddEditPlatformModal
               is_edit_user_added_platform={
                 this.state.is_edit_user_added_platform
               }
@@ -412,13 +449,16 @@ export default class AddEditPlatfrom extends Component {
               }
             />
           ) : null}
+          {this.state.edit_vcf_info_modal_toggle ? (
+            <VCFCardEditModalWithRedux />
+          ) : null}
         </SafeAreaView>
       </View>
     );
   }
 }
 
-class AddEditPlatfromModal extends Component {
+class AddEditPlatformModal extends Component {
   constructor(props) {
     super(props);
 
@@ -570,7 +610,7 @@ class AddEditPlatfromModal extends Component {
       25,
       50,
     );
-    this.props.navigation.reset({routes: [{name: 'AddEditPlatfrom'}]});
+    this.props.navigation.reset({routes: [{name: 'AddEditPlatform'}]});
   };
 
   _onSubmitPress = async () => {
@@ -707,10 +747,10 @@ class AddEditPlatfromModal extends Component {
     var path = `${RNFS.ExternalStorageDirectoryPath}/TacApp`;
     RNFS.mkdir(path);
 
-    const fileExtention = (filename) => {
+    const fileExtension = (filename) => {
       return /[.]/.exec(filename) ? /[^.]+$/.exec(filename) : undefined;
     };
-    const file_extension = fileExtention(download_link);
+    const file_extension = fileExtension(download_link);
 
     if (file_extension) {
       path += `/${parseInt(Math.random() * 1000000000)}.${file_extension}`;
@@ -730,7 +770,7 @@ class AddEditPlatfromModal extends Component {
       RNFS.downloadFile(DownloadFileOptions)
         .promise.then((res) => {
           this._onToastMessageSent(
-            `File Successfully Donwloaded to path ${path}`,
+            `File Successfully Downloaded to path ${path}`,
           );
         })
         .catch((err) => console.log({...err}));
@@ -1155,7 +1195,7 @@ class PlatformDetailModal extends Component {
       25,
       50,
     );
-    this.props.navigation.reset({routes: [{name: 'AddEditPlatfrom'}]});
+    this.props.navigation.reset({routes: [{name: 'AddEditPlatform'}]});
   };
 
   _onEditPress = async () => {
@@ -1393,6 +1433,182 @@ class PlatformDetailModal extends Component {
     );
   }
 }
+
+class VCFCardEditModal extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      vcf_info: {},
+    };
+  }
+  componentDidMount() {
+    const {profile_info} = this.props;
+    const {vcf_info} = profile_info;
+    this.setState({vcf_info});
+    console.log('profile_info ==== ', vcf_info);
+    // this.setState({vcf_info: this.props.vcf_info});
+
+    // console.log('platform_detail', this.props.platform_detail);
+    // if (this.props.platform_detail.get_user_platform_relation) {
+    //   this.setState({
+    //     is_edit_platform_btn_toggle: true,
+    //     isPlatformEnableToggle: this.props.platform_detail
+    //       .get_user_platform_relation.is_active
+    //       ? true
+    //       : false,
+    //     username_or_url: this.props.platform_detail.get_user_platform_relation
+    //       .platform_username,
+    //   });
+    // } else {
+    //   this.setState({isPlatformEnableToggle: true});
+    // }
+  }
+
+  render() {
+    // const {platform_detail} = this.props;
+    // const {is_edit_platform_btn_toggle} = this.state;
+    // return (
+    //   <Modal
+    //     animationType="fade"
+    //     transparent={true}
+    //     visible={true}
+    //     onRequestClose={() => this.props.modalClose()}>
+    //     <View
+    //       style={{
+    //         flex: 1,
+    //         justifyContent: 'center',
+    //         alignItems: 'center',
+    //         backgroundColor: 'rgba(0,0,0,0.5)',
+    //       }}>
+    //       <View
+    //         style={{
+    //           position: 'absolute',
+    //           top: 0,
+    //           right: 0,
+    //           marginTop: 4,
+    //           marginRight: 4,
+    //         }}>
+    //         <IconButton
+    //           color="#fff"
+    //           size={30}
+    //           style={{transform: [{rotate: '45deg'}]}}
+    //           icon="plus"
+    //           onPress={() => this.props.modalClose()}
+    //         />
+    //       </View>
+    //       <View
+    //         style={{
+    //           width: '85%',
+    //           backgroundColor: '#fff',
+    //           borderRadius: 4,
+    //           paddingVertical: 20,
+    //         }}>
+    //         <View style={{justifyContent: 'center', alignItems: 'center'}}>
+    //           <Pressable
+    //             onPress={() =>
+    //               platform_detail.redirection_url
+    //                 ? this._onPlatformPress(platform_detail.redirection_url)
+    //                 : null
+    //             }>
+    //             <Image
+    //               borderRadius={80 / 2}
+    //               resizeMode="contain"
+    //               style={{height: 80, width: 80}}
+    //               source={{uri: platform_detail.logo_url}}
+    //             />
+    //           </Pressable>
+    //           <Text style={{fontSize: 18, fontWeight: '700', marginTop: 10}}>
+    //             {platform_detail.name}
+    //           </Text>
+    //         </View>
+    //         <View style={{paddingHorizontal: 15, marginTop: 20}}>
+    //           {is_edit_platform_btn_toggle ? (
+    //             <View
+    //               style={{
+    //                 flexDirection: 'row',
+    //                 alignItems: 'center',
+    //                 justifyContent: 'space-between',
+    //                 marginBottom: 10,
+    //               }}>
+    //               <Text style={{fontSize: 16, fontWeight: '700'}}>
+    //                 Disable / Enable
+    //               </Text>
+    //               <Switch
+    //                 color="blue"
+    //                 value={this.state.isPlatformEnableToggle}
+    //                 onValueChange={(bool) =>
+    //                   this.setState({
+    //                     isPlatformEnableToggle: bool,
+    //                   })
+    //                 }
+    //               />
+    //             </View>
+    //           ) : null}
+    //           <TextInput
+    //             disabled={!this.state.isPlatformEnableToggle}
+    //             mode="outlined"
+    //             label={platform_detail.base_url ? 'username' : 'URL'}
+    //             value={this.state.username_or_url}
+    //             dense
+    //             style={{backgroundColor: '#fff'}}
+    //             onChangeText={(text) => this.setState({username_or_url: text})}
+    //           />
+    //           <View
+    //             style={{
+    //               flexDirection: 'row',
+    //               alignItems: 'center',
+    //               justifyContent: 'space-between',
+    //               marginTop: 20,
+    //             }}>
+    //             <Button
+    //               mode="contained"
+    //               style={{flex: 1, marginRight: 6}}
+    //               onPress={
+    //                 is_edit_platform_btn_toggle
+    //                   ? () => this._onEditPress()
+    //                   : () => this._onAddPress()
+    //               }>
+    //               {is_edit_platform_btn_toggle ? `Edit` : 'Add'}
+    //             </Button>
+    //             {is_edit_platform_btn_toggle ? (
+    //               <Button
+    //                 mode="outlined"
+    //                 color="red"
+    //                 style={{flex: 1, marginLeft: 6}}
+    //                 onPress={() =>
+    //                   this._onRemoveAlertPress()
+    //                 }>{`Remove`}</Button>
+    //             ) : null}
+    //           </View>
+    //         </View>
+    //       </View>
+    //     </View>
+    //   </Modal>
+    // );
+
+    return <></>;
+  }
+}
+
+const mapStateToProps = (state) => {
+  return {
+    profile_info: state.profile_info,
+  };
+};
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    changeProfileInfo: (profile_info) => {
+      dispatch({type: 'CHANGE_PROFILE_INFO', payload: profile_info});
+    },
+  };
+};
+
+const VCFCardEditModalWithRedux = connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(VCFCardEditModal);
 
 const styles = StyleSheet.create({
   horizontalSeparator: {

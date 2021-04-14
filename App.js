@@ -8,12 +8,15 @@
 
 import React from 'react';
 
-import { createStore } from 'redux';
-import { Provider } from 'react-redux';
-import Reducer from './components/reducer/index';
+import {createStore} from 'redux';
+import {Provider} from 'react-redux';
+import Reducer from './reducer';
 import AuthProvider from './navigation';
 
-const store = createStore(Reducer, window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__());
+const store = createStore(
+  Reducer,
+  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__(),
+);
 
 const App = () => {
   return (

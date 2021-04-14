@@ -30,6 +30,9 @@ import RNFS from 'react-native-fs';
 import {ToastAndroid} from 'react-native';
 import {Pressable} from 'react-native';
 import {TouchableHighlight} from 'react-native';
+import {NativeModules} from 'react-native';
+import {Platform} from 'react-native';
+import {connect} from 'react-redux';
 
 const media = [
   {
@@ -57,12 +60,11 @@ const media = [
   },
 ];
 
-export default class HomeScreen extends Component {
+class HomeScreen extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      user_info: {},
       user_platforms: [],
     };
   }
@@ -99,14 +101,17 @@ export default class HomeScreen extends Component {
   };
 
   _onVCardPress = async () => {
+    const {user_info} = this.props;
+    const {vcf_info} = user_info;
+    console.log(vcf_info);
     //create a new vCard
     let contact = vCard();
 
     //set properties
-    contact.firstName = 'Eric';
-    contact.middleName = 'J';
-    contact.lastName = 'Nesser';
-    contact.organization = 'ACME Corporation';
+    contact.firstName = vcf_info.full_name?.split(' ')[0];
+    contact.middleName = '';
+    contact.lastName = vcf_info.full_name?.split(' ')[1];
+    contact.organization = '';
     contact.photo.attachFromUrl(
       'https://avatars2.githubusercontent.com/u/5659221?v=3&s=460',
       'JPEG',
@@ -137,15 +142,26 @@ export default class HomeScreen extends Component {
     }
     var path = `${RNFS.ExternalStorageDirectoryPath}/TacApp`;
     RNFS.mkdir(path);
-    path += '/eric-nesser.vcf';
+
+    const {username} = user_info;
+    path += `/${username}.vcf`;
 
     //save to file
     contact
       .saveToFile(path)
       .then((res) => {
         this._onToastMessageSent(
-          `File Successfully Donwloaded to path ${path}`,
+          `File Successfully Downloaded to path ${path}`,
         );
+        const RNFetchBlob = NativeModules.RNFetchBlob;
+        if (Platform.OS === 'android') {
+          // only for android
+          const mimeType = `text/x-vcard`;
+          RNFetchBlob.actionViewIntent(file_path, mimeType);
+        } else if (Platform.OS === 'ios') {
+          // only for ios
+          RNFetchBlob.openDocument(file_path);
+        }
       })
       .catch((err) => {
         console.log({...err});
@@ -164,7 +180,9 @@ export default class HomeScreen extends Component {
           user_uuid,
       )
       .then((res) => {
-        this.setState({user_info: res.data, uuid: user_uuid});
+        this.setState({uuid: user_uuid});
+        this.props.changeProfileInfo(res.data);
+
         this.setState({
           user_platforms: [
             {
@@ -182,7 +200,7 @@ export default class HomeScreen extends Component {
               customised: true,
               name: 'Add / Edit',
               redirection_func: () =>
-                this.props.navigation.navigate('AddEditPlatfrom'),
+                this.props.navigation.navigate('AddEditPlatform'),
               logo_url: null,
               icon: 'plus',
             },
@@ -382,7 +400,7 @@ export default class HomeScreen extends Component {
   };
 
   _listHeaderComponent = () => {
-    const {user_info} = this.state;
+    const {user_info} = this.props;
     return (
       <View style={{paddingHorizontal: 15, marginBottom: 20}}>
         <View
@@ -505,7 +523,7 @@ export default class HomeScreen extends Component {
                 icon={'qrcode'}
                 onPress={() =>
                   this.props.navigation.navigate('QRCodeScreen', {
-                    qr_value: this.state.user_info.uuid,
+                    qr_value: this.props.user_info.uuid,
                   })
                 }
               />
@@ -538,3 +556,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
 });
+
+const mapStateToProps = (state) => {
+  return {
+    user_info: state.profile_info,
+  };
+};
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    changeProfileInfo: (profile_info) => {
+      dispatch({type: 'CHANGE_PROFILE_INFO', payload: profile_info});
+    },
+  };
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(HomeScreen);

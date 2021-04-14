@@ -13,8 +13,9 @@ import {
   API_UPDATE_USER_PROFILE_KEY,
 } from '@env';
 import ActivityIndicator from '../components/ActivityIndicator';
+import {connect} from 'react-redux';
 
-export default class EditProfileScreen extends Component {
+class EditProfileScreen extends Component {
   constructor(props) {
     super(props);
 
@@ -26,7 +27,8 @@ export default class EditProfileScreen extends Component {
   }
 
   componentDidMount() {
-    this._getUserInfo();
+    this.setState({user_details: this.props.profile_info, isLoading: false});
+    // this._getUserInfo();
   }
 
   _getUserInfo = async () => {
@@ -117,6 +119,8 @@ export default class EditProfileScreen extends Component {
       )
       .then((res) => {
         console.log(res);
+        delete userProfileData.profile_picture;
+        this.props.changeProfileInfo({...userProfileData, avatar});
         alert(res.data.message);
       })
       .catch((err) => {
@@ -222,3 +226,19 @@ export default class EditProfileScreen extends Component {
     );
   }
 }
+
+const mapStateToProps = (state) => {
+  return {
+    profile_info: state.profile_info,
+  };
+};
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    changeProfileInfo: (profile_info) => {
+      dispatch({type: 'CHANGE_PROFILE_INFO', payload: profile_info});
+    },
+  };
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(EditProfileScreen);
